@@ -36,6 +36,7 @@ class KeyBERT:
     def extract_keywords(self,
                          docs: Union[str, List[str]],
                          keyphrase_length: int = 1,
+                         keyphrase_max_length: int = None,
                          stop_words: Union[str, List[str]] = 'english',
                          top_n: int = 5,
                          min_df: int = 1,
@@ -84,6 +85,7 @@ class KeyBERT:
         if isinstance(docs, str):
             return self._extract_keywords_single_doc(docs,
                                                      keyphrase_length,
+                                                     keyphrase_max_length,
                                                      stop_words,
                                                      top_n,
                                                      use_maxsum,
@@ -96,6 +98,7 @@ class KeyBERT:
                           "to hold all word embeddings. Use this at your own discretion!")
             return self._extract_keywords_multiple_docs(docs,
                                                         keyphrase_length,
+                                                        keyphrase_max_length,
                                                         stop_words,
                                                         top_n,
                                                         min_df=min_df)
@@ -103,6 +106,7 @@ class KeyBERT:
     def _extract_keywords_single_doc(self,
                                      doc: str,
                                      keyphrase_length: int = 1,
+                                     keyphrase_max_length: int = None,
                                      stop_words: Union[str, List[str]] = 'english',
                                      top_n: int = 5,
                                      use_maxsum: bool = False,
@@ -127,7 +131,9 @@ class KeyBERT:
         """
         try:
             # Extract Words
-            n_gram_range = (keyphrase_length, keyphrase_length)
+            if keyphrase_max_length is None:
+                keyphrase_max_length = keyphrase_length
+            n_gram_range = (keyphrase_length, keyphrase_max_length)
             count = CountVectorizer(ngram_range=n_gram_range, stop_words=stop_words).fit([doc])
             words = count.get_feature_names()
 
@@ -151,6 +157,7 @@ class KeyBERT:
     def _extract_keywords_multiple_docs(self,
                                         docs: List[str],
                                         keyphrase_length: int = 1,
+                                        keyphrase_max_length: int = None,
                                         stop_words: str = 'english',
                                         top_n: int = 5,
                                         min_df: int = 1):
@@ -170,7 +177,9 @@ class KeyBERT:
 
         """
         # Extract words
-        n_gram_range = (keyphrase_length, keyphrase_length)
+        if keyphrase_max_length is None:
+            keyphrase_max_length = keyphrase_length
+        n_gram_range = (keyphrase_length, keyphrase_max_length)
         count = CountVectorizer(ngram_range=n_gram_range, stop_words=stop_words, min_df=min_df).fit(docs)
         words = count.get_feature_names()
         df = count.transform(docs)
